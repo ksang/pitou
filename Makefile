@@ -17,6 +17,8 @@ install:
 test:
 	go test -race -cover ${GOPACKAGES}
 
+testv:
+	go test -race -cover -v ${GOPACKAGES}
 clean:
 	rm -rf build
 

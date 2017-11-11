@@ -5,8 +5,13 @@ import (
 	"time"
 
 	"github.com/coreos/etcd/embed"
+	"github.com/coreos/pkg/capnslog"
 	"github.com/ksang/pitou/util"
 )
+
+func init() {
+	capnslog.SetGlobalLogLevel(capnslog.CRITICAL)
+}
 
 func TestNewConfig(t *testing.T) {
 	cfg := embed.NewConfig()
@@ -33,7 +38,7 @@ func TestStartServer(t *testing.T) {
 		select {
 		case <-s.etcd.Server.ReadyNotify():
 			t.Logf("etcd Server is ready!")
-		case <-time.After(60 * time.Second):
+		case <-time.After(10 * time.Second):
 			s.etcd.Server.Stop() // trigger a shutdown
 			t.Errorf("Server took too long to start!")
 		}
@@ -41,7 +46,7 @@ func TestStartServer(t *testing.T) {
 		select {
 		case err := <-s.etcd.Err():
 			t.Errorf("etcd server error: %s", err)
-		case <-time.After(10 * time.Second):
+		case <-time.After(3 * time.Second):
 			t.Logf("etcd start server ok")
 		}
 		s.etcd.Close()

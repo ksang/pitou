@@ -35,6 +35,7 @@ func (s *Server) genConfig(c *embed.Config) {
 		c.InitialCluster = c.InitialClusterFromName(c.Name)
 	}
 	c.Dir = EtcdDataFolder + c.Name
+	c.LogPkgLevels = "all=FATAL"
 }
 
 func (s *Server) Start() error {

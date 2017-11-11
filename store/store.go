@@ -5,7 +5,9 @@ package store
 
 import (
 	"net/url"
+	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/embed"
 )
 
@@ -20,4 +22,12 @@ type Server struct {
 	// example: etcd0=http://1.1.1.1:2380,etcd1=http://2.2.2.2:2380
 	Cluster string
 	etcd    *embed.Etcd
+}
+
+type Client struct {
+	// Server configuration struct
+	Server  *Server
+	Timeout time.Duration
+	cli     *clientv3.Client
+	kv      clientv3.KV
 }
