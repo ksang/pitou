@@ -3,7 +3,11 @@ Package puppet provides functionalities interacting with SDN nodes
 */
 package puppet
 
-import "time"
+import (
+	"time"
+
+	"github.com/ksang/pitou/store"
+)
 
 /*
 Collector is the abstraction of collecting metrics and telemetry from SDN nodes.
@@ -20,7 +24,7 @@ const (
 	// NodeSwitchREST REST service running on Mellanox SwitchX
 	NodeSwitchREST NodeType = iota
 	// NodeUNKOWN type
-	NodeUNKOWN
+	NodeUNKNOWN
 )
 
 // Puppet describes properties of a puppet node
@@ -28,4 +32,5 @@ type Puppet struct {
 	Type     NodeType
 	Address  string
 	Interval time.Duration
+	Store    *store.Client
 }

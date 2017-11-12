@@ -3,7 +3,10 @@ package puppet
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"time"
+
+	"github.com/ksang/pitou/store"
 )
 
 // SwitchREST is switch rest type of puppet includes internal used members
@@ -13,6 +16,7 @@ type SwitchREST struct {
 	errCh     chan error
 	quitCh    chan struct{}
 	portCount int
+	store     *store.Client
 }
 
 // NewSwitchREST returns a SwitchREST collector of puppet configuration provided
@@ -21,6 +25,7 @@ func NewSwitchREST(p Puppet) Collector {
 		Node:   p,
 		errCh:  make(chan error, 1),
 		quitCh: make(chan struct{}, 1),
+		store:  p.Store,
 	}
 }
 
@@ -134,5 +139,8 @@ func (s *SwitchREST) updateSystemResp(sysResp []byte) error {
 		return err
 	}
 	s.portCount = sr.Data.PortCount
+	if s.store != nil {
+		s.store.Put("/nodes/"+s.Node.Address+"/port_count", strconv.FormatInt(int64(s.portCount), 10))
+	}
 	return nil
 }
