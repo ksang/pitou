@@ -27,9 +27,12 @@ const (
 	NodeUNKNOWN
 )
 
+const DefaultInterval = time.Second * 10
+
 // Puppet describes properties of a puppet node
 type Puppet struct {
-	Type     NodeType
+	Type NodeType
+	// connection string, http://1.2.3.4:8080
 	Address  string
 	Interval time.Duration
 	Store    *store.Client

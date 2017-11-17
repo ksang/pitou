@@ -1,0 +1,13 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"checksumSHA1": "EZfK+vT0HW6fW0/bvpoMAfFOU0A=",
+			"path": "github.com/olebedev/config",
+			"revision": "9a10d05a33a8b9e828f20491e21e8927dec35f72",
+			"revisionTime": "2017-09-14T11:20:07Z"
+		}
+	],
+	"rootPath": "github.com/ksang/pitou"
+}

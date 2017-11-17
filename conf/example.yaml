@@ -1,0 +1,8 @@
+store:
+    PeerURL: http://127.0.0.1:1234
+    ClientURL: http://127.0.0.1:1235
+    Name: example
+    Timeout: 2s
+puppets:
+    - Address: http://10.244.48.74:8080
+      Interval: 10s

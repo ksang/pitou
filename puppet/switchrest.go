@@ -3,6 +3,10 @@ package puppet
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 	"strconv"
 	"time"
 
@@ -12,7 +16,7 @@ import (
 // SwitchREST is switch rest type of puppet includes internal used members
 type SwitchREST struct {
 	// Node is puppet configuration
-	Node      Puppet
+	Node      *Puppet
 	errCh     chan error
 	quitCh    chan struct{}
 	portCount int
@@ -22,7 +26,7 @@ type SwitchREST struct {
 // NewSwitchREST returns a SwitchREST collector of puppet configuration provided
 func NewSwitchREST(p Puppet) Collector {
 	return &SwitchREST{
-		Node:   p,
+		Node:   &p,
 		errCh:  make(chan error, 1),
 		quitCh: make(chan struct{}, 1),
 		store:  p.Store,
@@ -40,6 +44,7 @@ func (s *SwitchREST) Start() chan error {
 			case <-time.After(s.Node.Interval):
 				err := s.collect()
 				if err != nil {
+					log.Println("collect error:", err)
 					s.errCh <- err
 				}
 			case <-s.quitCh:
@@ -124,11 +129,26 @@ func (s *SwitchREST) collect() error {
 	if err := s.updateSystemResp(sysResp); err != nil {
 		return err
 	}
+	if err := s.collectPorts(s.portCount); err != nil {
+		return err
+	}
 	return nil
 }
 
 func (s *SwitchREST) collectSystemResp() ([]byte, error) {
-	return []byte{}, nil
+	if s.Node == nil {
+		return []byte{}, nil
+	}
+	resp, err := http.Get(s.Node.Address + "/system/")
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
 }
 
 func (s *SwitchREST) updateSystemResp(sysResp []byte) error {
@@ -141,6 +161,49 @@ func (s *SwitchREST) updateSystemResp(sysResp []byte) error {
 	s.portCount = sr.Data.PortCount
 	if s.store != nil {
 		s.store.Put("/nodes/"+s.Node.Address+"/port_count", strconv.FormatInt(int64(s.portCount), 10))
+	}
+	return nil
+}
+
+func (s *SwitchREST) collectPorts(portNum int) error {
+	for i := 0; i < portNum; i++ {
+		pdr, err := s.collectPortDetailResp(i)
+		if err != nil {
+			return err
+		}
+		if err := s.updatePortDetail(pdr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *SwitchREST) collectPortDetailResp(portId int) ([]byte, error) {
+	if s.Node == nil {
+		return []byte{}, nil
+	}
+	addr := fmt.Sprintf("%s/ports/%s/", s.Node.Address, portId)
+	resp, err := http.Get(addr)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+	return body, nil
+}
+
+func (s *SwitchREST) updatePortDetail(pdResp []byte) error {
+	sr := &SwitchRESTPortDetailResp{}
+	if err := json.Unmarshal([]byte(pdResp), &sr); err != nil {
+		return err
+	}
+	prefix := fmt.Sprintf("/nodes/%s/ports/%s/", s.Node.Address, sr.Data.PortID)
+	if s.store != nil {
+		s.store.Put(prefix+"/admin_speed", sr.Data.AdminSpeed)
+		s.store.Put(prefix+"/oper_state", sr.Data.OperationState)
 	}
 	return nil
 }
