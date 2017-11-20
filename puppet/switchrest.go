@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ksang/pitou/store"
+	"github.com/ksang/pitou/util"
 )
 
 // SwitchREST is switch rest type of puppet includes internal used members
@@ -20,16 +21,18 @@ type SwitchREST struct {
 	errCh     chan error
 	quitCh    chan struct{}
 	portCount int
+	instance  string
 	store     *store.Client
 }
 
 // NewSwitchREST returns a SwitchREST collector of puppet configuration provided
 func NewSwitchREST(p Puppet) Collector {
 	return &SwitchREST{
-		Node:   &p,
-		errCh:  make(chan error, 1),
-		quitCh: make(chan struct{}, 1),
-		store:  p.Store,
+		Node:     &p,
+		errCh:    make(chan error, 1),
+		quitCh:   make(chan struct{}, 1),
+		instance: util.RemoveScheme(p.Address),
+		store:    p.Store,
 	}
 }
 
@@ -160,7 +163,7 @@ func (s *SwitchREST) updateSystemResp(sysResp []byte) error {
 	}
 	s.portCount = sr.Data.PortCount
 	if s.store != nil {
-		s.store.Put("/nodes/"+s.Node.Address+"/port_count", strconv.FormatInt(int64(s.portCount), 10))
+		s.store.Put("/nodes/"+s.instance+"/port_count", strconv.FormatInt(int64(s.portCount), 10))
 	}
 	return nil
 }
@@ -182,7 +185,7 @@ func (s *SwitchREST) collectPortDetailResp(portId int) ([]byte, error) {
 	if s.Node == nil {
 		return []byte{}, nil
 	}
-	addr := fmt.Sprintf("%s/ports/%s/", s.Node.Address, portId)
+	addr := fmt.Sprintf("%s/ports/%d/", s.Node.Address, portId)
 	resp, err := http.Get(addr)
 	if err != nil {
 		return nil, err
@@ -200,10 +203,10 @@ func (s *SwitchREST) updatePortDetail(pdResp []byte) error {
 	if err := json.Unmarshal([]byte(pdResp), &sr); err != nil {
 		return err
 	}
-	prefix := fmt.Sprintf("/nodes/%s/ports/%s/", s.Node.Address, sr.Data.PortID)
+	prefix := fmt.Sprintf("/nodes/%s/ports/%d/", s.instance, sr.Data.PortID)
 	if s.store != nil {
-		s.store.Put(prefix+"/admin_speed", sr.Data.AdminSpeed)
-		s.store.Put(prefix+"/oper_state", sr.Data.OperationState)
+		s.store.Put(prefix+"admin_speed", sr.Data.AdminSpeed)
+		s.store.Put(prefix+"oper_state", sr.Data.OperationState)
 	}
 	return nil
 }

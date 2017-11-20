@@ -2,6 +2,7 @@ package util
 
 import (
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -74,5 +75,32 @@ func TestUrlsToStrings(t *testing.T) {
 
 		}
 		t.Logf("Result: %v", r)
+	}
+}
+
+func TestRemoveScheme(t *testing.T) {
+	var tests = []struct {
+		s string
+		e string
+	}{
+		{
+			"http://127.0.0.1:1234",
+			"127.0.0.1:1234",
+		},
+		{
+			"https://127.0.0.1:1234",
+			"127.0.0.1:1234",
+		},
+		{
+			"http://127.0.0.1",
+			"127.0.0.1",
+		},
+	}
+
+	for caseid, c := range tests {
+		res := RemoveScheme(c.s)
+		if strings.Compare(res, c.e) != 0 {
+			t.Errorf("case #%d, expected: %s, actual: %s", caseid+1, c.e, res)
+		}
 	}
 }

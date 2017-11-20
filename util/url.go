@@ -33,3 +33,10 @@ func UrlsToStrings(urls []url.URL) []string {
 	}
 	return ret
 }
+
+// RemoveScheme removes http or https scheme from address, e.g. http://1.1.1.1 to 1.1.1.1
+func RemoveScheme(addr string) string {
+	ret := strings.TrimPrefix(addr, "http://")
+	ret = strings.TrimPrefix(ret, "https://")
+	return ret
+}

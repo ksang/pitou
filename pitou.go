@@ -122,5 +122,5 @@ func main() {
 	}
 	cli := StartStore(cfg)
 	StartPuppetMgr(cfg, cli)
-	time.Sleep(60 * time.Second)
+	time.Sleep(999 * time.Second)
 }
