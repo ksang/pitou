@@ -3,6 +3,7 @@ package puppet
 import (
 	"encoding/json"
 	"fmt"
+	"reflect"
 	"testing"
 )
 
@@ -129,8 +130,14 @@ func TestUpdateSystemResp(t *testing.T) {
 
 func TestUpdatePortDetailResp(t *testing.T) {
 	sr := &SwitchRESTPortDetailResp{}
-	if err := json.Unmarshal([]byte(srPortsDetailResp), &sr); err != nil {
+	if err := json.Unmarshal([]byte(srPortsDetailResp), sr); err != nil {
 		t.Error(err)
 	}
 	fmt.Printf("SR: %#v", sr)
+	counters := reflect.Indirect(reflect.ValueOf(sr.Data.Counters))
+	for i := 0; i < counters.NumField(); i++ {
+		value := counters.Field(i).Interface()
+		fmt.Printf("Counters field: %s, value: %v\n", counters.Type().Field(i).Name, value)
+		continue
+	}
 }

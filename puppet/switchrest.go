@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"reflect"
 	"strconv"
 	"time"
 
@@ -203,10 +204,27 @@ func (s *SwitchREST) updatePortDetail(pdResp []byte) error {
 	if err := json.Unmarshal([]byte(pdResp), &sr); err != nil {
 		return err
 	}
+	if len(sr.Data.Error) > 0 {
+		return errors.New(sr.Data.Error)
+	}
 	prefix := fmt.Sprintf("/nodes/%s/ports/%d/", s.instance, sr.Data.PortID)
 	if s.store != nil {
+		// port detail info
 		s.store.Put(prefix+"admin_speed", sr.Data.AdminSpeed)
+		s.store.Put(prefix+"admin_state", sr.Data.AdminState)
+		s.store.Put(prefix+"oper_speed", strconv.FormatInt(int64(sr.Data.OperationSpeed), 10))
 		s.store.Put(prefix+"oper_state", sr.Data.OperationState)
+		s.store.Put(prefix+"mtu", strconv.FormatInt(int64(sr.Data.MTU), 10))
+		s.store.Put(prefix+"label_port", strconv.FormatInt(int64(sr.Data.PortLable), 10))
+		// port counters
+		counters := reflect.Indirect(reflect.ValueOf(sr.Data.Counters))
+		for i := 0; i < counters.NumField(); i++ {
+			if counters.Field(i).Kind() == reflect.Int {
+				value := counters.Field(i).Interface().(int)
+				fmt.Printf("Counters field: %s, value: %v\n", counters.Type().Field(i).Name, value)
+				s.store.Put(prefix+"counters/"+counters.Type().Field(i).Name, strconv.FormatInt(int64(value), 10))
+			}
+		}
 	}
 	return nil
 }
